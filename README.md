@@ -1,44 +1,85 @@
-NaughtyAttributes' Docs
-=======================
-NaughtyAttributes is an open-source extension for the Unity Inspector.
+# TimeManager Plugin for Unity
 
-It expands the range of attributes that Unity provides so that you can create powerful inspectors without the need of custom editors or property drawers.
-It also provides attributes that can be applied to non-serialized fields or functions.
+This Unity plugin provides a solution for managing time scale-independent behavior in games, enabling smooth transitions between time scales (including `timeScale = 0`) and ensuring specific game objects remain unaffected by global time scale changes. It consists of two core components: `TimeManager` and `TimeExcluder`, written in C# for Unity.
+For a better overview you can look at the documentation at https://saltopepper.gitbook.io/timemanager-documentation
 
-.. note::
-    Most of the attributes are implemented using Unity's ``CustomPropertyDrawer``, so they will work in your custom editors.
-    The attributes that won't work in your custom editors are the :ref:`label-meta-attributes` and some :ref:`label-drawer-attributes`
-    such as :ref:`label-reorderable-list`, :ref:`label-button`, :ref:`label-show-non-serialized-field` and :ref:`label-show-native-property`.    
-    If you want all of the attributes to work in your custom editors, however,
-    you must inherit from ``NaughtyInspector`` and use the ``NaughtyEditorGUI.PropertyField_Layout`` function instead of ``EditorGUILayout.PropertyField``.
+## Overview
 
-Contribute
-----------
-If you want to contribute you can visit the `GitHub Repo <https://github.com/dbrizov/NaughtyAttributes>`_ and give me pull requests.
-The project is using ``CRLF`` and ``Spaces`` instead of ``Tabs``. It's not a must, but I'd really appreciate if you respect the coding standard.
-It's easier for me to merge your changes that way. You can also create issues as feature requests.
+The **TimeManager Plugin** enhances Unity's time management by:
+- Allowing smooth lerping between time scales.
+- Supporting limited physics simulations at `timeScale = 0`.
+- Excluding specific game objects (e.g., rigidbodies, animations, particle systems) from time scale effects using customizable preservation methods (momentum or energy).
 
-Donation
---------
-I am developing the project in my free time. If you like it you can support me by donating.
+This plugin is particularly useful for games requiring control over time manipulation, such as slow-motion effects, pause mechanics, or physics-driven simulations.
 
-- `PayPal <https://paypal.me/dbrizov>`_
-- `Buy Me A Coffee <https://www.buymeacoffee.com/dbrizov>`_
+## Features
 
+### TimeManager
+- **Smooth Time Scale Transitions**: Lerp between time scales with adjustable duration.
+- **Zero Time Scale Support**: Simulates physics manually when `timeScale = 0`.
+- **Event System**: Notifies subscribers of time scale changes via `OnTimeChange`.
+- **Gravity Toggle**: Optional gravity application at `timeScale = 0` via `ExperimentGravity`.
 
-.. toctree::
-    :maxdepth: 1
-    :caption: General
-    :name: sec-general
+### TimeExcluder
+- **Modular Time Exclusion**: Adjusts game objects (rigidbodies, animations, animators, particle systems) to operate independently of `Time.timeScale`.
+- **Preservation Options**: Choose between **momentum preservation** (`p = m * v`) or **energy preservation** (`E = 1/2 * m * v²`) for rigidbody adjustments.
+- **Collision Handling**: Supports perfect bounces at `timeScale = 0`.
+- **Accurate Collision Mode**: Optionally switches to continuous dynamic collision detection for precision.
 
-    general/installation
+## Installation
 
-.. toctree::
-    :maxdepth: 1
-    :caption: Attributes
-    :name: sec-attributes
+1. **Clone or Download**: Obtain the plugin as a TimeManager.unitypackage
+2. **Add to Unity Project**: Just open the package, while unity is open or drag'n'drop the package into your unity scene.
 
-    attributes/drawer_attributes/index
-    attributes/meta_attributes/index
-    attributes/validator_attributes/index
-    attributes/special_attributes/index
+## Usage
+
+### Setup
+1. **TimeManager**:
+   - Attach the `TimeManager` script to a GameObject or use the provided Prefab.
+   - (Optional) Assign GameObjects to the `m_adjustedObjects` list in the Inspector to automatically add `TimeExcluder` components on start.
+
+2. **TimeExcluder**:
+   - Attach to GameObjects with components like `Rigidbody`, `Animation`, `Animator`, or `ParticleSystem`.
+
+### Example Code
+```csharp
+using TimeManagerPlugin;
+
+.
+.
+.
+
+// Adjust time scale instantly
+TimeManager.AdjustTimeScale(0.5f);
+
+// Smoothly lerp to a new time scale over 2 seconds
+TimeManager.Instance.LerpTimeScale(0f, 2f);
+
+// Gradually move towards a target time scale
+TimeManager.MoveTowardsTimeScale(1f, 0.1f);
+```
+
+### In-Game Behavior
+- **Rigidbody**: Velocity, mass, drag, and bounciness are adjusted based on the chosen preservation method.
+- **Animation**: Manually sampled to run on unscaled time.
+- **Animator & Particle System**: Use built-in unscaled time modes when `timeScale ≠ 1`.
+
+## Configuration
+
+### TimeManager
+- `ExperimentGravity`: Enable/disable gravity simulation at `timeScale = 0`.
+
+### TimeExcluder
+- `m_preserveMomentum`: Select `Momentum` or `Energy` for rigidbody adjustments.
+- `AccurateCollisionMode`: Enable for continuous collision detection at non-standard time scales.
+
+## Notes
+- Ensure `TimeManager` is added to the scene before using its static methods.
+- The plugin assumes a standard Unity physics setup;
+- Tested with Unity Version 2022.3.42f1
+
+## License
+This plugin is provided under the [MIT License](LICENSE). Feel free to use, modify, and distribute it as needed.
+
+## Acknowledgments
+Developed as part of a Bachelorarbeit project by Thanh Dang Duc exploring time manipulation in game development. Special thanks to Unity's awesome engine and all my colleagues and mentors.
